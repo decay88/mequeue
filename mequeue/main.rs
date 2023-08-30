@@ -28,7 +28,7 @@ pub struct Executor<B1> {
 }
 
 impl<B1> Executor<B1> {
-	pub async fn enqueue<T1, E1>(&mut self, mut topic: T1, mut event: E1)
+	pub async fn enqueue<T1, E1>(&self, mut topic: T1, mut event: E1)
 	where
 		B1: Step<T1, E1>,
 	{
