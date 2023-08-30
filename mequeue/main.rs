@@ -3,8 +3,8 @@ use {async_trait::async_trait, std::future::Future};
 type Output<T1, E1> = Option<(T1, E1)>;
 
 #[async_trait]
-pub trait Path<T1, E1>: Send {
-	async fn execute(&mut self, event: E1) -> Output<T1, E1>;
+pub trait Path<T1, E1>: Send + Sync {
+	async fn execute(&self, event: E1) -> Output<T1, E1>;
 }
 
 #[async_trait]
@@ -13,7 +13,7 @@ where
 	F1: Fn(E1) -> R1,
 	R1: Future<Output = Output<T1, E1>>,
 {
-	async fn execute(&mut self, event: E1) -> Output<T1, E1> {
+	async fn execute(&self, event: E1) -> Output<T1, E1> {
 		(*self)(event).await
 	}
 }
