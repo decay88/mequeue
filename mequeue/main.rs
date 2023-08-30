@@ -19,8 +19,8 @@ where
 }
 
 #[async_trait]
-pub trait Step<T1, E1>: Send {
-	async fn enqueue(&mut self, topic: T1, event: E1) -> Output<T1, E1>;
+pub trait Step<T1, E1>: Send + Sync {
+	async fn enqueue(&self, topic: T1, event: E1) -> Output<T1, E1>;
 }
 
 pub struct Executor<B1> {
@@ -63,13 +63,13 @@ impl<B1, T1, R1> Router<B1, T1, R1> {
 }
 
 #[async_trait]
-impl<B1, T1: Send, R1, E1: Send + 'static> Step<T1, E1> for Router<B1, T1, R1>
+impl<B1, T1: Send + Sync, R1, E1: Send + 'static> Step<T1, E1> for Router<B1, T1, R1>
 where
 	B1: Step<T1, E1>,
 	R1: Path<T1, E1>,
 	T1: Eq,
 {
-	async fn enqueue(&mut self, topic: T1, event: E1) -> Output<T1, E1> {
+	async fn enqueue(&self, topic: T1, event: E1) -> Output<T1, E1> {
 		if topic == self.topic {
 			self.route.execute(event).await
 		} else {
@@ -107,7 +107,7 @@ impl<T1: Send + 'static, E1: Send + 'static, R1> Step<T1, E1> for Root<R1>
 where
 	R1: Path<T1, E1>,
 {
-	async fn enqueue(&mut self, _: T1, event: E1) -> Output<T1, E1> {
+	async fn enqueue(&self, _: T1, event: E1) -> Output<T1, E1> {
 		self.route.execute(event).await
 	}
 }
