@@ -111,3 +111,32 @@ where
 		self.route.execute(event).await
 	}
 }
+
+#[cfg(test)]
+mod test {
+	use super::Root;
+
+	#[tokio::test]
+	async fn api() {
+		let (sender, mut receiver) = tokio::sync::mpsc::channel(1);
+
+		let default = |e| {
+			let sender = sender.clone();
+
+			async move {
+				sender.send(e).await.unwrap();
+
+				None
+			}
+		};
+		let executor = Root::new(default)
+			.map("1", |e| async move { Some(("2", e)) })
+			.map("2", |e| async move { Some(("3", e)) })
+			.execute();
+
+		executor.enqueue("1", 0).await;
+
+		assert_eq!(receiver.recv().await.unwrap(), 0);
+		()
+	}
+}
