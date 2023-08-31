@@ -1,0 +1,10 @@
+[package]
+name = "interceptor"
+version = "0.0.0"
+edition = "2021"
+
+[[bin]]
+name = "interceptor"
+path = "main.rs"
+
+[dependencies]
