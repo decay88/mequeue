@@ -8,3 +8,13 @@ name = "interceptor"
 path = "main.rs"
 
 [dependencies]
+mequeue = { version = "0", path = "../mequeue" }
+
+ethers-providers = { version = "2", features = [
+    "ws",
+], default-features = false }
+
+ethers-core = { version = "2", default-features = false }
+
+tokio = { version = "1", features = ["full"] }
+futures = "0.3"
