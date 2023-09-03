@@ -1,7 +1,6 @@
 use std::sync::Arc;
 
-use ethers_providers::Middleware;
-use ethers_providers::Ws;
+use ethers_providers::{Middleware, Ws};
 use futures::StreamExt;
 use mequeue::Step;
 

@@ -8,7 +8,7 @@ pub trait Path<T1, E1>: Send + Sync {
 }
 
 #[async_trait]
-impl<F1: Send + Sync, R1: Send, T1, E1: Send + 'static> Path<T1, E1> for F1
+impl<F1: Send + Sync, T1, E1: Send + 'static, R1: Send> Path<T1, E1> for F1
 where
 	F1: Fn(E1) -> R1,
 	R1: Future<Output = Output<T1, E1>>,
@@ -63,7 +63,7 @@ impl<B1, T1, R1> Router<B1, T1, R1> {
 }
 
 #[async_trait]
-impl<B1, T1: Send + Sync, R1, E1: Send + 'static> Step<T1, E1> for Router<B1, T1, R1>
+impl<B1, T1: Send + Sync, E1: Send + 'static, R1> Step<T1, E1> for Router<B1, T1, R1>
 where
 	B1: Step<T1, E1>,
 	R1: Path<T1, E1>,
