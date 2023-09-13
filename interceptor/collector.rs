@@ -18,7 +18,7 @@ pub mod mempool {
 		let mut stream = middleware.subscribe(["newPendingTransactionsWithBody"]).await.unwrap();
 
 		while let Some(transaction) = stream.next().await {
-			executor.enqueue(Event::Transaction(transaction)).await;
+			executor.execute(Event::Transaction(transaction)).await;
 		}
 		None
 	}
@@ -34,7 +34,7 @@ pub mod block {
 		let mut stream = middleware.subscribe_blocks().await.unwrap();
 
 		while let Some(block) = stream.next().await {
-			executor.enqueue(Event::Block(block)).await;
+			executor.execute(Event::Block(block)).await;
 		}
 		None
 	}
