@@ -6,15 +6,6 @@ The main goal is to make this executor to add as less resource-overhead as possi
 [Package](https://crates.io/crates/mequeue) |
 [Chat](https://t.me/mequeue)
 
-# Design
-The only overhead source is the callback search algorithm, it works in O(n) where n is the number of callbacks.
-
-Callbacks may produce events, they are dispatched as usual events.
-
-Executor is mainly built with generics. It works in async context, every inner call is async.
-
-There's no inner queue despite the name.
-
 # Usage
 ```toml
 [dependencies]
