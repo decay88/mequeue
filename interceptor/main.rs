@@ -3,15 +3,11 @@ use ethers_providers::{Provider, Ws};
 
 mod collector;
 
-pub type Topic<'a> = &'a str;
-
 #[derive(Debug)]
 pub enum Event {
 	Block(Block<H256>),
 	Transaction(Transaction),
 }
-
-pub type Ret<'a> = Option<(Topic<'a>, Event)>;
 
 #[tokio::main]
 async fn main() {
@@ -22,22 +18,19 @@ async fn main() {
 	let block = |e| async move {
 		match e {
 			Event::Block(b) => println!("|b| {}", b.hash.unwrap()),
-			_ => panic!(),
+			e => return Some(e),
 		}
 		None
 	};
 	let transaction = |e| async move {
 		match e {
 			Event::Transaction(t) => println!("|t| {}", t.hash),
-			_ => panic!(),
+			e => return Some(e),
 		}
 		None
 	};
 
-	let executor = mequeue::Root::new(|_| async { None })
-		.map("block", block)
-		.map("transaction", transaction)
-		.execute();
+	let executor = stepwise::Executor::new(block).map(transaction);
 	let executor = std::sync::Arc::new(executor);
 
 	tokio::join!(

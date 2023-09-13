@@ -1,13 +1,17 @@
 lib.path = "main.rs"
 
 [package]
-name = "mequeue"
+name = "stepwise"
 description = """
-mequeue
+stepwise
 """
 version = "0.0.0"
 
 license = "Apache-2.0"
 edition = "2021"
 
+[dev-dependencies]
+tokio = { version = "1", features = ["full"] }
+
 [dependencies]
+async-trait = "0.1"
