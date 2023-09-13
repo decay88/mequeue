@@ -17,7 +17,7 @@ where
 }
 
 #[async_trait]
-pub trait Step<E1>: Send + Sync {
+pub trait Executor<E1>: Send + Sync {
 	async fn enqueue(&self, event: E1) -> Option<E1>;
 }
 
@@ -29,16 +29,16 @@ pub struct Map<B1, R1> {
 impl<B1, R1> Map<B1, R1> {
 	pub fn map<E1, R2>(self, route: R2) -> Map<Self, R2>
 	where
-		B1: Step<E1>,
+		B1: Executor<E1>,
 	{
 		Map { inner: self, route }
 	}
 }
 
 #[async_trait]
-impl<B1, E1: Send + 'static, R1> Step<E1> for Map<B1, R1>
+impl<B1, E1: Send + 'static, R1> Executor<E1> for Map<B1, R1>
 where
-	B1: Step<E1>,
+	B1: Executor<E1>,
 	R1: Path<E1>,
 {
 	async fn enqueue(&self, event: E1) -> Option<E1> {
@@ -71,7 +71,7 @@ impl<R1> Root<R1> {
 }
 
 #[async_trait]
-impl<E1: Send + 'static, R1> Step<E1> for Root<R1>
+impl<E1: Send + 'static, R1> Executor<E1> for Root<R1>
 where
 	R1: Path<E1>,
 {

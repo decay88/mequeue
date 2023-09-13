@@ -2,19 +2,18 @@ use std::sync::Arc;
 
 use ethers_providers::{Middleware, Ws};
 use futures::StreamExt;
-use stepwise::Step;
+use stepwise::Executor;
 
 use crate::Event;
 
-type Executor<B1> = Arc<B1>;
 type Provider = Arc<ethers_providers::Provider<Ws>>;
 
 pub mod mempool {
 	use super::*;
 
-	pub async fn collect<'a, B1>(executor: Executor<B1>, middleware: Provider) -> Option<Event>
+	pub async fn collect<'a, B1>(executor: Arc<B1>, middleware: Provider) -> Option<Event>
 	where
-		B1: Step<Event>,
+		B1: Executor<Event>,
 	{
 		let mut stream = middleware.subscribe(["newPendingTransactionsWithBody"]).await.unwrap();
 
@@ -28,9 +27,9 @@ pub mod mempool {
 pub mod block {
 	use super::*;
 
-	pub async fn collect<'a, M1>(executor: Executor<M1>, middleware: Provider) -> Option<Event>
+	pub async fn collect<'a, M1>(executor: Arc<M1>, middleware: Provider) -> Option<Event>
 	where
-		M1: Step<Event>,
+		M1: Executor<Event>,
 	{
 		let mut stream = middleware.subscribe_blocks().await.unwrap();
 
