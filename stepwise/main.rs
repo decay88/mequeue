@@ -54,14 +54,14 @@ pub struct Executor<R1> {
 	route: R1,
 }
 
-impl<R1> Executor<R1> {
-	pub fn new<E1>(route: R1) -> Self
-	where
-		R1: Path<E1>,
-	{
-		Self { route }
-	}
+pub fn new<E1, R1>(route: R1) -> Executor<R1>
+where
+	R1: Path<E1>,
+{
+	Executor { route }
+}
 
+impl<R1> Executor<R1> {
 	pub fn map<E1, R2>(self, route: R2) -> Map<Self, R2>
 	where
 		R2: Path<E1>,

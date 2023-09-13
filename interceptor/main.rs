@@ -30,7 +30,7 @@ async fn main() {
 		None
 	};
 
-	let executor = stepwise::Executor::new(block).map(transaction);
+	let executor = stepwise::new(block).map(transaction);
 	let executor = std::sync::Arc::new(executor);
 
 	tokio::join!(
