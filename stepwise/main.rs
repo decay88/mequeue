@@ -50,18 +50,18 @@ where
 	}
 }
 
-pub struct Executor<R1> {
+pub struct Root<R1> {
 	route: R1,
 }
 
-pub fn new<E1, R1>(route: R1) -> Executor<R1>
+pub fn new<E1, R1>(route: R1) -> Root<R1>
 where
 	R1: Path<E1>,
 {
-	Executor { route }
+	Root { route }
 }
 
-impl<R1> Executor<R1> {
+impl<R1> Root<R1> {
 	pub fn map<E1, R2>(self, route: R2) -> Map<Self, R2>
 	where
 		R2: Path<E1>,
@@ -71,7 +71,7 @@ impl<R1> Executor<R1> {
 }
 
 #[async_trait]
-impl<E1: Send + 'static, R1> Step<E1> for Executor<R1>
+impl<E1: Send + 'static, R1> Step<E1> for Root<R1>
 where
 	R1: Path<E1>,
 {
