@@ -1,4 +1,7 @@
-use tokio::{sync::mpsc, task::JoinHandle};
+use tokio::{
+	sync::mpsc::{self, Receiver},
+	task::JoinHandle,
+};
 
 use {async_trait::async_trait, std::future::Future};
 
@@ -39,7 +42,22 @@ where
 
 type ChannelResult<E1> = Result<(), mpsc::error::SendError<E1>>;
 type EventSenderResult<E1> = ChannelResult<Maybe<E1>>;
+
+type EventReceiver<E1> = mpsc::Receiver<Maybe<E1>>;
 type EventSender<E1> = mpsc::Sender<Maybe<E1>>;
+
+async fn receive<F1, E1>(inner_dispatcher: Ref<F1>, mut event_receiver: EventReceiver<E1>)
+where
+	F1: AwaitDispatch<E1>,
+{
+	while let Some(maybe_event) = event_receiver.recv().await {
+		let inner_dispatcher = inner_dispatcher.clone();
+
+		if let Some(event) = maybe_event {
+			inner_dispatcher.dispatch(event).await;
+		}
+	}
+}
 
 pub fn new<F1: 'static, F2: 'static, E1: Send + 'static>(
 	event_queue_size: usize,
@@ -50,7 +68,7 @@ where
 	F1: EventDispatch<E1>,
 	F2: AwaitDispatch<EventSenderResult<E1>>,
 {
-	let (event_sender, mut event_receiver) = mpsc::channel(event_queue_size);
+	let (event_sender, event_receiver) = mpsc::channel(event_queue_size);
 
 	let executor = event_sender.clone();
 
@@ -76,16 +94,7 @@ where
 	};
 	let inner_dispatcher = Ref::new(inner_dispatcher);
 
-	let receive = async move {
-		while let Some(maybe_event) = event_receiver.recv().await {
-			let inner_dispatcher = inner_dispatcher.clone();
-
-			if let Some(event) = maybe_event {
-				inner_dispatcher(event).await
-			}
-		}
-	};
-	let inner = tokio::spawn(receive);
+	let inner = tokio::spawn(receive(inner_dispatcher, event_receiver));
 
 	(executor, inner)
 }
