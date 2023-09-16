@@ -43,7 +43,7 @@ type EventSenderResult<E1> = ChannelResult<Maybe<E1>>;
 type EventDispatchJoinHandle<E1> = JoinHandle<EventSenderResult<E1>>;
 type EventSender<E1> = mpsc::Sender<Maybe<E1>>;
 
-pub fn execute<F1: 'static, F2: 'static, E1: Send + 'static>(
+pub fn new<F1: 'static, F2: 'static, E1: Send + 'static>(
 	event_queue_size: usize,
 	event_dispatcher: Ref<F1>,
 	await_dispatcher: Ref<F2>,

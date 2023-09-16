@@ -30,7 +30,7 @@ async fn main() {
 
 	let await_dispatch = Ref::new(|_| async move {});
 
-	let (event_sender, jh) = mequeue::execute(512, event_dispatch, await_dispatch);
+	let (event_sender, jh) = mequeue::new(512, event_dispatch, await_dispatch);
 
 	tokio::join!(
 		collector::mempool::collect(event_sender.clone(), middleware.clone()),
