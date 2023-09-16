@@ -68,7 +68,7 @@ where
 		};
 		let (execute, await_dispatcher) = (Ref::new(execute), await_dispatcher.clone());
 
-		let extract = move |event| {
+		let inner_dispatcher = move |event| {
 			let (execute, await_dispatcher) = (execute.clone(), await_dispatcher.clone());
 
 			async move {
@@ -77,14 +77,14 @@ where
 				await_dispatcher.dispatch(event).await;
 			}
 		};
-		let extract = Ref::new(extract);
+		let inner_dispatcher = Ref::new(inner_dispatcher);
 
 		async move {
 			while let Some(maybe_event) = event_receiver.recv().await {
-				let extract = extract.clone();
+				let inner_dispatcher = inner_dispatcher.clone();
 
 				if let Some(event) = maybe_event {
-					extract.dispatch(event).await
+					inner_dispatcher.dispatch(event).await
 				}
 			}
 		}
