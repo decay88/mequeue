@@ -57,7 +57,7 @@ where
 	let receive = || {
 		let (event_dispatcher, event_sender) = (event_dispatcher.clone(), event_sender.clone());
 
-		let execute = move |event| {
+		let dispatch = move |event| {
 			let (event_dispatcher, event_sender) = (event_dispatcher.clone(), event_sender.clone());
 
 			async move {
@@ -66,13 +66,13 @@ where
 				event_sender.send(event).await
 			}
 		};
-		let (execute, await_dispatcher) = (Ref::new(execute), await_dispatcher.clone());
+		let (dispatch, await_dispatcher) = (Ref::new(dispatch), await_dispatcher.clone());
 
 		let inner_dispatcher = move |event| {
-			let (execute, await_dispatcher) = (execute.clone(), await_dispatcher.clone());
+			let (dispatch, await_dispatcher) = (dispatch.clone(), await_dispatcher.clone());
 
 			async move {
-				let event = tokio::spawn(execute(event));
+				let event = tokio::spawn(dispatch(event));
 
 				await_dispatcher.dispatch(event).await;
 			}
