@@ -1,7 +1,4 @@
-use tokio::{
-	sync::mpsc::{self, Receiver},
-	task::JoinHandle,
-};
+use tokio::{sync::mpsc, task::JoinHandle};
 
 use {async_trait::async_trait, std::future::Future};
 
