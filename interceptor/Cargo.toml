@@ -8,7 +8,7 @@ name = "interceptor"
 path = "main.rs"
 
 [dependencies]
-stepwise = { version = "0", path = "../stepwise" }
+mequeue = { version = "0", path = "../mequeue" }
 
 ethers-providers = { version = "2", features = [
     "ws",
