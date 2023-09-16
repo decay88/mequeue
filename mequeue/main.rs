@@ -52,42 +52,40 @@ where
 {
 	let (event_sender, mut event_receiver) = mpsc::channel(event_queue_size);
 
-	let receive = || {
+	let executor = event_sender.clone();
+
+	let dispatch = move |event| {
 		let (event_dispatcher, event_sender) = (event_dispatcher.clone(), event_sender.clone());
 
-		let dispatch = move |event| {
-			let (event_dispatcher, event_sender) = (event_dispatcher.clone(), event_sender.clone());
+		async move {
+			let event = event_dispatcher.dispatch(event).await;
 
-			async move {
-				let event = event_dispatcher.dispatch(event).await;
+			event_sender.send(event).await
+		}
+	};
+	let (dispatch, await_dispatcher) = (Ref::new(dispatch), await_dispatcher.clone());
 
-				event_sender.send(event).await
-			}
-		};
-		let (dispatch, await_dispatcher) = (Ref::new(dispatch), await_dispatcher.clone());
-
-		let inner_dispatcher = move |event| {
-			let (dispatch, await_dispatcher) = (dispatch.clone(), await_dispatcher.clone());
-
-			async move {
-				let event = dispatch(event).await;
-
-				await_dispatcher.dispatch(event).await;
-			}
-		};
-		let inner_dispatcher = Ref::new(inner_dispatcher);
+	let inner_dispatcher = move |event| {
+		let (dispatch, await_dispatcher) = (dispatch.clone(), await_dispatcher.clone());
 
 		async move {
-			while let Some(maybe_event) = event_receiver.recv().await {
-				let inner_dispatcher = inner_dispatcher.clone();
+			let event = dispatch(event).await;
 
-				if let Some(event) = maybe_event {
-					inner_dispatcher.dispatch(event).await
-				}
+			await_dispatcher.dispatch(event).await;
+		}
+	};
+	let inner_dispatcher = Ref::new(inner_dispatcher);
+
+	let receive = async move {
+		while let Some(maybe_event) = event_receiver.recv().await {
+			let inner_dispatcher = inner_dispatcher.clone();
+
+			if let Some(event) = maybe_event {
+				inner_dispatcher(event).await
 			}
 		}
 	};
-	let inner = tokio::spawn(receive());
+	let inner = tokio::spawn(receive);
 
-	(event_sender, inner)
+	(executor, inner)
 }
