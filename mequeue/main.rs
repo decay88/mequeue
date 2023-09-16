@@ -39,8 +39,6 @@ where
 
 type ChannelResult<E1> = Result<(), mpsc::error::SendError<E1>>;
 type EventSenderResult<E1> = ChannelResult<Maybe<E1>>;
-
-type EventDispatchJoinHandle<E1> = JoinHandle<EventSenderResult<E1>>;
 type EventSender<E1> = mpsc::Sender<Maybe<E1>>;
 
 pub fn new<F1: 'static, F2: 'static, E1: Send + 'static>(
@@ -50,7 +48,7 @@ pub fn new<F1: 'static, F2: 'static, E1: Send + 'static>(
 ) -> (EventSender<E1>, JoinHandle<()>)
 where
 	F1: EventDispatch<E1>,
-	F2: AwaitDispatch<EventDispatchJoinHandle<E1>>,
+	F2: AwaitDispatch<EventSenderResult<E1>>,
 {
 	let (event_sender, mut event_receiver) = mpsc::channel(event_queue_size);
 
@@ -72,7 +70,7 @@ where
 			let (dispatch, await_dispatcher) = (dispatch.clone(), await_dispatcher.clone());
 
 			async move {
-				let event = tokio::spawn(dispatch(event));
+				let event = dispatch(event).await;
 
 				await_dispatcher.dispatch(event).await;
 			}
