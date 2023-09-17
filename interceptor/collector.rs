@@ -2,33 +2,40 @@ use std::sync::Arc;
 
 use ethers_providers::{Middleware, Ws};
 use futures::StreamExt;
+use stepwise::Executor;
 
-use tokio::sync::mpsc;
-
-use crate::{Event, Maybe};
+use crate::Event;
 
 type Provider = Arc<ethers_providers::Provider<Ws>>;
 
 pub mod mempool {
 	use super::*;
 
-	pub async fn collect(event_sender: mpsc::Sender<Maybe<Event>>, middleware: Provider) {
+	pub async fn collect<E1>(executor: Arc<E1>, middleware: Provider) -> Option<Event>
+	where
+		E1: Executor<Event>,
+	{
 		let mut stream = middleware.subscribe(["newPendingTransactionsWithBody"]).await.unwrap();
 
 		while let Some(transaction) = stream.next().await {
-			event_sender.send(Some(Event::Transaction(transaction))).await.unwrap();
+			executor.execute(Event::Transaction(transaction)).await;
 		}
+		None
 	}
 }
 
 pub mod block {
 	use super::*;
 
-	pub async fn collect(event_sender: mpsc::Sender<Maybe<Event>>, middleware: Provider) {
+	pub async fn collect<E1>(executor: Arc<E1>, middleware: Provider) -> Option<Event>
+	where
+		E1: Executor<Event>,
+	{
 		let mut stream = middleware.subscribe_blocks().await.unwrap();
 
 		while let Some(block) = stream.next().await {
-			event_sender.send(Some(Event::Block(block))).await.unwrap();
+			executor.execute(Event::Block(block)).await;
 		}
+		None
 	}
 }
