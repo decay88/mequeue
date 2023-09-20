@@ -6,7 +6,7 @@ pub trait Worker<E1>: Send + Sync {
 }
 
 #[async_trait]
-impl<F1: Send + Sync, E1: Send + 'static, R1: Send> Worker<E1> for F1
+impl<E1: Send + 'static, R1: Send, F1: Send + Sync> Worker<E1> for F1
 where
 	F1: Fn(E1) -> R1,
 	R1: Future<Output = ()>,
