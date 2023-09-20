@@ -1,19 +1,17 @@
-use std::{future::Future, ops::Deref};
-
-use async_trait::async_trait;
+use {async_trait::async_trait, std::future::Future};
 
 #[async_trait]
-pub trait Worker: Send + Sync {
-	async fn execute(&self);
+pub trait Worker<E1>: Send + Sync {
+	async fn execute(&self, event: E1);
 }
 
 #[async_trait]
-impl<F1: Send + Sync, R1: Send> Worker for F1
+impl<F1: Send + Sync, E1: Send + 'static, R1: Send> Worker<E1> for F1
 where
-	F1: Fn() -> R1,
+	F1: Fn(E1) -> R1,
 	R1: Future<Output = ()>,
 {
-	async fn execute(&self) {
-		self.deref()().await
+	async fn execute(&self, event: E1) {
+		(*self)(event).await
 	}
 }
