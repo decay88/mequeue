@@ -1,11 +1,11 @@
-use {crate::worker::Worker, async_channel::Receiver};
+use {crate::worker::MappedWorker, async_channel::Receiver};
 
 type Maybe<T1> = std::option::Option<T1>;
 type Mut<T1> = std::sync::Arc<std::sync::Mutex<T1>>;
 
 pub async fn dispatch<E1: Clone, W1>(state: Mut<Maybe<E1>>, receiver: Receiver<E1>, worker: W1)
 where
-	W1: Worker<E1>,
+	W1: MappedWorker<E1>,
 {
 	let maybe = { state.lock().unwrap().clone() };
 
