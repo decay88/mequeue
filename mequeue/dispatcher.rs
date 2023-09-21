@@ -1,9 +1,6 @@
 use {crate::worker::MappedWorker, async_channel::Receiver};
 
-type Maybe<T1> = std::option::Option<T1>;
-
-type Wal<T1> = std::sync::Arc<std::sync::Mutex<std::option::Option<T1>>>;
-type Mut<T1> = std::sync::Arc<std::sync::Mutex<T1>>;
+pub type Wal<T1> = std::sync::Arc<std::sync::Mutex<std::option::Option<T1>>>;
 
 pub async fn dispatch<E1: Clone, W1>(wal: Wal<E1>, receiver: Receiver<E1>, worker: W1)
 where
