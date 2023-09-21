@@ -944,10 +944,11 @@ dependencies = [
 name = "interceptor"
 version = "0.0.0"
 dependencies = [
+ "async-channel",
  "ethers-core",
  "ethers-providers",
  "futures",
- "stepwise",
+ "mequeue",
  "tokio",
 ]
 

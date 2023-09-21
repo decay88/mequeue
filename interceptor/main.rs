@@ -1,13 +1,11 @@
 use ethers_core::types::{Block, Transaction, H256};
 use ethers_providers::{Provider, Ws};
+use mequeue::executor::Executor;
+use tokio::sync::broadcast;
 
 mod collector;
 
-#[derive(Debug)]
-pub enum Event {
-	Block(Block<H256>),
-	Transaction(Transaction),
-}
+type Ref<T1> = std::sync::Arc<T1>;
 
 #[tokio::main]
 async fn main() {
@@ -15,27 +13,20 @@ async fn main() {
 	let middleware = Provider::<Ws>::connect(remote).await.unwrap();
 	let middleware = std::sync::Arc::new(middleware);
 
-	let block = |e| async move {
-		match e {
-			Event::Block(b) => println!("|b| {}", b.hash.unwrap()),
-			e => return Some(e),
-		}
-		None
-	};
-	let transaction = |e| async move {
-		match e {
-			Event::Transaction(t) => println!("|t| {}", t.hash),
-			e => return Some(e),
-		}
-		None
+	let (ws, state) = broadcast::channel(512);
+	let (we, event) = async_channel::bounded(512);
+
+	let executor = Executor::new(state, event, 12);
+
+	let worker = |state: Ref<Block<H256>>, event: Transaction| async move {
+		println!("{} | {}", state.hash.unwrap(), event.hash());
 	};
 
-	let executor = stepwise::new(block).map(transaction);
-	let executor = std::sync::Arc::new(executor);
+	tokio::spawn(executor.receive(worker));
 
 	tokio::join!(
-		collector::mempool::collect(executor.clone(), middleware.clone()),
-		collector::block::collect(executor.clone(), middleware.clone())
+		collector::block::collect(ws, middleware.clone()),
+		collector::mempool::collect(we, middleware.clone()),
 	);
 	()
 }
