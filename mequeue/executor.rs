@@ -1,6 +1,6 @@
-use async_channel as mpmc;
 use std::sync::Mutex;
 
+use async_channel as mpmc;
 use tokio::{sync::broadcast, task::JoinSet};
 
 use crate::{dispatcher, worker::Worker};
