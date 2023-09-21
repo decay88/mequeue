@@ -48,7 +48,7 @@ where
 		let worker = move |event| {
 			let (worker, state) = (worker.clone(), state.clone());
 
-			async move { worker.execute(&state, event).await }
+			async move { worker.execute(state, event).await }
 		};
 
 		self.inner.spawn(dispatcher::dispatch(wal, receiver, worker));
@@ -96,11 +96,11 @@ mod test {
 
 		let (ck, mut check) = mpsc::channel(512);
 
-		let worker = move |state: &u8, event| {
+		let worker = move |state: Ref<u8>, event| {
 			let (state, ck) = (state.clone(), ck.clone());
 
 			async move {
-				ck.send((state, event)).await.unwrap();
+				ck.send((*state, event)).await.unwrap();
 
 				tokio::time::sleep(Duration::from_secs(100)).await;
 			}
