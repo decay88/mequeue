@@ -46,6 +46,8 @@ where
 		let (wal, receiver) = (self.wal[wi].clone(), self.event.clone());
 
 		let worker = move |event| {
+			// Keep in mind that this closure will be called on every event
+
 			let (worker, state) = (worker.clone(), state.clone());
 
 			async move { worker.execute(state, event).await }
@@ -61,6 +63,8 @@ where
 		self.inner.shutdown().await;
 
 		for wi in 0..self.count {
+			// Spawn a few workers to use the full power of async
+
 			let (worker, state) = (worker.clone(), state.clone());
 
 			self.execute(wi, worker, state).await;
@@ -74,6 +78,8 @@ where
 		let worker = Ref::new(worker);
 
 		while let Ok(state) = self.state.recv().await {
+			// Stop and start workers when we receive new state
+
 			let (worker, state) = (worker.clone(), Ref::new(state));
 
 			self.respawn(worker, state).await;
