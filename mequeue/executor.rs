@@ -89,12 +89,12 @@ mod test {
 
 	#[tokio::test]
 	async fn wal() {
-		let (we, event) = async_channel::bounded::<u8>(512);
-		let (ws, state) = broadcast::channel::<u8>(512);
+		let (we, event) = async_channel::bounded(512);
+		let (ws, state) = broadcast::channel(512);
 
 		let executor = Executor::new(state, event, 12);
 
-		let (ck, mut check) = mpsc::channel::<(u8, u8)>(512);
+		let (ck, mut check) = mpsc::channel(512);
 
 		let worker = move |state: &u8, event| {
 			let (state, ck) = (state.clone(), ck.clone());
