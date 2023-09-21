@@ -80,3 +80,56 @@ where
 		}
 	}
 }
+
+#[cfg(test)]
+mod test {
+	use super::*;
+
+	use {std::time::Duration, tokio::sync::mpsc};
+
+	#[tokio::test]
+	async fn wal() {
+		let (we, event) = async_channel::bounded::<u8>(512);
+		let (ws, state) = broadcast::channel::<u8>(512);
+
+		let executor = Executor::new(state, event, 12);
+
+		let (ck, mut check) = mpsc::channel::<(u8, u8)>(512);
+
+		let worker = move |state: &u8, event| {
+			let (state, ck) = (state.clone(), ck.clone());
+
+			async move {
+				ck.send((state, event)).await.unwrap();
+
+				tokio::time::sleep(Duration::from_secs(100)).await;
+			}
+		};
+		tokio::spawn(executor.receive(worker));
+
+		// Send event to channel but there are no workers yet.
+		we.send(0).await.unwrap();
+
+		// Update state and workers will be started.
+		ws.send(0).unwrap();
+
+		// Check that worker received event.
+		let val = check.recv().await.unwrap();
+
+		assert_eq!(val, (0, 0));
+
+		// Event is not processed because worker is not finished it's execution.
+		// Worker not finished it's execution because there is sleep in it.
+		// By sending new state we will abort execution of worker.
+		// Then worker will be restarted. There is an event remaining in wal.
+		// Wal was not cleared because event was not processed.
+		ws.send(1).unwrap();
+
+		// After restart worker will try to process event from wal first.
+		let val = check.recv().await.unwrap();
+
+		assert_eq!(val, (1, 0));
+
+		()
+	}
+}
