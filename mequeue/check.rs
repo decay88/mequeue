@@ -10,19 +10,22 @@ type Ref<T1> = std::sync::Arc<T1>;
 type Tup = (u8, u8);
 
 async fn new() -> (mpmc::Sender<u8>, broadcast::Sender<u8>, mpsc::Receiver<Tup>) {
-	// Spawn new executor with captured channel and required parameters.
-
 	let (we, event) = async_channel::bounded(512);
 	let (ws, state) = broadcast::channel(512);
 
+	// Spawn new executor with captured channels and required parameters.
 	let executor = Executor::new(state, event, 12);
 
 	let (wk, check) = mpsc::channel(512);
 
 	let worker = move |state: Ref<u8>, event| {
-		let (state, wk) = (state.clone(), wk.clone());
+		// Get wk from the outer context to return received values.
+
+		let wk = wk.clone();
 
 		async move {
+			// Sleep because future should not complete.
+
 			wk.send((*state, event)).await.unwrap();
 
 			sleep(Duration::from_secs(100)).await;
