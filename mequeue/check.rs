@@ -1,15 +1,16 @@
 use std::time::Duration;
 
 use async_channel as mpmc;
-use tokio::sync::{broadcast, broadcast::Sender, mpsc};
+use tokio::sync::{broadcast, mpsc};
 use tokio::time::sleep;
 
 use crate::executor::Executor;
 
 type Ref<T1> = std::sync::Arc<T1>;
+type Tup = (u8, u8);
 
-async fn new() -> (mpmc::Sender<u8>, Sender<u8>, mpsc::Receiver<(u8, u8)>) {
-	//
+async fn new() -> (mpmc::Sender<u8>, broadcast::Sender<u8>, mpsc::Receiver<Tup>) {
+	// Spawn new executor with captured channel and required parameters.
 
 	let (we, event) = async_channel::bounded(512);
 	let (ws, state) = broadcast::channel(512);
@@ -27,7 +28,7 @@ async fn new() -> (mpmc::Sender<u8>, Sender<u8>, mpsc::Receiver<(u8, u8)>) {
 			sleep(Duration::from_secs(100)).await;
 		}
 	};
-	tokio::spawn(executor.receive(worker));
+	tokio::task::spawn(executor.receive(worker));
 
 	(we, ws, check)
 }
