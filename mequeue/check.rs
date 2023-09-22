@@ -1,20 +1,22 @@
 use std::time::Duration;
 
-use tokio::sync::{broadcast, mpsc};
+use async_channel as mpmc;
+use tokio::sync::{broadcast, broadcast::Sender, mpsc};
 use tokio::time::sleep;
 
 use crate::executor::Executor;
 
 type Ref<T1> = std::sync::Arc<T1>;
 
-#[tokio::test]
-async fn wal() {
+async fn new() -> (mpmc::Sender<u8>, Sender<u8>, mpsc::Receiver<(u8, u8)>) {
+	//
+
 	let (we, event) = async_channel::bounded(512);
 	let (ws, state) = broadcast::channel(512);
 
 	let executor = Executor::new(state, event, 12);
 
-	let (wk, mut check) = mpsc::channel(512);
+	let (wk, check) = mpsc::channel(512);
 
 	let worker = move |state: Ref<u8>, event| {
 		let (state, wk) = (state.clone(), wk.clone());
@@ -26,6 +28,14 @@ async fn wal() {
 		}
 	};
 	tokio::spawn(executor.receive(worker));
+
+	(we, ws, check)
+}
+
+#[tokio::test]
+async fn wal() {
+	// Spawn new executor that will satisfy our requirements.
+	let (we, ws, mut check) = new().await;
 
 	// Send event to channel but there are no workers yet.
 	we.send(0u8).await.unwrap();
