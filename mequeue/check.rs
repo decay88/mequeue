@@ -1,6 +1,7 @@
 use std::time::Duration;
 
 use tokio::sync::{broadcast, mpsc};
+use tokio::time::sleep;
 
 use crate::executor::Executor;
 
@@ -13,21 +14,21 @@ async fn wal() {
 
 	let executor = Executor::new(state, event, 12);
 
-	let (ck, mut check) = mpsc::channel(512);
+	let (wk, mut check) = mpsc::channel(512);
 
 	let worker = move |state: Ref<u8>, event| {
-		let (state, ck) = (state.clone(), ck.clone());
+		let (state, wk) = (state.clone(), wk.clone());
 
 		async move {
-			ck.send((*state, event)).await.unwrap();
+			wk.send((*state, event)).await.unwrap();
 
-			tokio::time::sleep(Duration::from_secs(100)).await;
+			sleep(Duration::from_secs(100)).await;
 		}
 	};
 	tokio::spawn(executor.receive(worker));
 
 	// Send event to channel but there are no workers yet.
-	we.send(0).await.unwrap();
+	we.send(0u8).await.unwrap();
 
 	// Update state and workers will be started.
 	ws.send(0).unwrap();
