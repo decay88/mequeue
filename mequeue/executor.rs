@@ -1,4 +1,4 @@
-use std::sync::Mutex;
+use parking_lot::Mutex;
 
 use async_channel as mpmc;
 use tokio::{sync::broadcast, task::JoinSet};
