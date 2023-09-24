@@ -1,5 +1,5 @@
 # Mequeue
-Mequeue is an executor for MEV bots.
+Mequeue is an executor for MEV bots optimized to be able to process multiple transactions concurrently.
 
 The main goal is to make this executor to add as less resource-overhead as possible while keeping it simple to use.
 
