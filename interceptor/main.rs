@@ -1,16 +1,33 @@
+use {futures::StreamExt, tokio::sync::broadcast};
+
 use ethers_core::types::{Block, Transaction, H256};
-use ethers_providers::{Provider, Ws};
-use mequeue::executor::Executor;
-use tokio::sync::broadcast;
+use ethers_providers::{Middleware, Provider, Ws};
 
-mod collector;
+use mequeue::Executor;
 
+type Websocket = std::sync::Arc<Provider<Ws>>;
 type Ref<T1> = std::sync::Arc<T1>;
 
 async fn handle(state: Ref<Block<H256>>, event: Transaction) {
 	// Just provide formatted output of received data as example.
 
 	println!("{} {}", state.hash.unwrap(), event.hash());
+}
+
+async fn receive_block_update(ws: broadcast::Sender<Block<H256>>, middleware: Websocket) {
+	let mut stream = middleware.subscribe_blocks().await.unwrap();
+
+	while let Some(block) = stream.next().await {
+		ws.send(block).unwrap();
+	}
+}
+
+async fn receive_from_mempool(we: async_channel::Sender<Transaction>, middleware: Websocket) {
+	let mut stream = middleware.subscribe(["newPendingTransactionsWithBody"]).await.unwrap();
+
+	while let Some(transaction) = stream.next().await {
+		we.send(transaction).await.unwrap();
+	}
 }
 
 #[tokio::main]
@@ -33,8 +50,8 @@ async fn main() {
 	tokio::spawn(executor.receive(handle));
 
 	tokio::join!(
-		collector::block::collect(ws, middleware.clone()),
-		collector::mempool::collect(we, middleware.clone()),
+		receive_block_update(ws, middleware.clone()),
+		receive_from_mempool(we, middleware.clone()),
 	);
 	()
 }
