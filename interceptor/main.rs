@@ -9,14 +9,19 @@ type Ref<T1> = std::sync::Arc<T1>;
 
 #[tokio::main]
 async fn main() {
+	// Get address of remote node from environment
 	let remote = std::env::var("REMOTE").unwrap();
-	let middleware = Provider::<Ws>::connect(remote).await.unwrap();
-	let middleware = std::sync::Arc::new(middleware);
 
+	// Connect to remote node through websocket
+	let middleware = Provider::<Ws>::connect(remote).await.unwrap();
+	let middleware = Ref::new(middleware);
+
+	// Make channels for both state and event exchange
 	let (ws, state) = broadcast::channel(512);
 	let (we, event) = async_channel::bounded(512);
 
-	let executor = Executor::new(state, event, 12);
+	// Construct executor with channels we made above and set workers count to eight
+	let executor = Executor::new(state, event, 8);
 
 	let worker = |state: Ref<Block<H256>>, event: Transaction| async move {
 		println!("{} | {}", state.hash.unwrap(), event.hash());
