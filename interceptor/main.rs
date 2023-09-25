@@ -8,7 +8,7 @@ mod collector;
 type Ref<T1> = std::sync::Arc<T1>;
 
 async fn handle(state: Ref<Block<H256>>, event: Transaction) {
-	// Just provide formatted output of received data as example
+	// Just provide formatted output of received data as example.
 
 	println!("{} {}", state.hash.unwrap(), event.hash());
 }
